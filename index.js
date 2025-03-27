@@ -7,28 +7,21 @@ dotenv.config();
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const app = express();
 
-bot.start((ctx) => {
-  ctx.reply("Hello! Send me a message, and I'll show your details.");
+app.use(express.json());
+
+app.post(`/${process.env.BOT_TOKEN}`, (req, res) => {
+  bot.handleUpdate(req.body);
+  res.sendStatus(200);
 });
-
-bot.on("message", (ctx) => {
-  const userId = ctx.from.id;
-  const chatId = ctx.chat.id;
-  const messageText = ctx.message.text;
-
-  ctx.reply(
-    `👤 *User ID:* ${userId}\n💬 *Chat ID:* ${chatId}\n📩 *Message:* ${messageText}`,
-    { parse_mode: "Markdown" }
-  );
-});
-
-bot.launch();
 
 app.get("/", (req, res) => {
   res.send("Telegram ID Checker Bot is running...");
 });
 
-const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, async () => {
+  console.log(`Server running on port ${PORT}`);
+
+  const webhookUrl = `https://id-checker-bot.vercel.app/${process.env.BOT_TOKEN}`;
+  await bot.telegram.setWebhook(webhookUrl);
 });
