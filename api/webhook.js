@@ -6,22 +6,16 @@ const bot = new Telegraf(process.env.BOT_TOKEN);
 // Configure webhook settings
 bot.telegram.setWebhook(process.env.WEBHOOK_URL);
 
-// Export a function to handle webhook requests
-export default async function handler(request, response) {
-  try {
-    // Only allow POST requests
-    if (request.method !== 'POST') {
-      response.status(200).json({ ok: true });
-      return;
-    }
+// Configure bot settings
+bot.telegram.setWebhook(`${process.env.WEBHOOK_URL}/api/webhook`);
 
-    // Process the update
-    await bot.handleUpdate(request.body, response);
-  } catch (error) {
-    console.error('Error in webhook handler:', error);
-    response.status(500).json({ ok: false, error: error.message });
+// Helper function to parse and validate updates
+const parseUpdate = (body) => {
+  if (!body || typeof body !== "object") {
+    throw new Error("Invalid update format");
   }
-}
+  return body;
+};
 
 // Command to get User ID & Chat ID
 bot.start((ctx) => {
@@ -81,7 +75,8 @@ bot.on("channel_post", async (ctx) => {
 export default async function handler(request, response) {
   try {
     if (request.method === "POST") {
-      await bot.handleUpdate(request.body);
+      const update = parseUpdate(request.body);
+      await bot.handleUpdate(update);
       response.status(200).json({ ok: true });
     } else {
       response.status(200).json({ ok: true, message: "Webhook is active" });
