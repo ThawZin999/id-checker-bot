@@ -10,7 +10,7 @@ const app = express();
 app.use(express.json());
 
 // Webhook endpoint for Telegram updates
-app.post(`/${process.env.BOT_TOKEN}`, (req, res) => {
+app.post(`/webhook`, (req, res) => {
   bot.handleUpdate(req.body);
   res.sendStatus(200);
 });
@@ -56,7 +56,7 @@ app.listen(PORT, async () => {
   console.log(`🌍 Server running on port ${PORT}`);
 
   // Set the Telegram webhook
-  const webhookUrl = `https://${process.env.VERCEL_URL}/${process.env.BOT_TOKEN}`;
+  const webhookUrl = `https://${process.env.VERCEL_URL}/webhook`;
   try {
     await bot.telegram.setWebhook(webhookUrl);
     console.log(`✅ Webhook set: ${webhookUrl}`);
