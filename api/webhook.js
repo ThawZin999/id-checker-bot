@@ -3,6 +3,26 @@ import { Telegraf } from "telegraf";
 // Initialize bot with environment variable
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
+// Configure webhook settings
+bot.telegram.setWebhook(process.env.WEBHOOK_URL);
+
+// Export a function to handle webhook requests
+export default async function handler(request, response) {
+  try {
+    // Only allow POST requests
+    if (request.method !== 'POST') {
+      response.status(200).json({ ok: true });
+      return;
+    }
+
+    // Process the update
+    await bot.handleUpdate(request.body, response);
+  } catch (error) {
+    console.error('Error in webhook handler:', error);
+    response.status(500).json({ ok: false, error: error.message });
+  }
+}
+
 // Command to get User ID & Chat ID
 bot.start((ctx) => {
   ctx.reply(`👋 Hello, ${ctx.from.first_name}!
