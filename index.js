@@ -27,9 +27,10 @@ bot.on("message", (ctx) => {
   try {
     const userId = ctx.from.id;
     const chatId = ctx.chat.id;
+    const messageId = ctx.message.message_id; // Get message ID
     const messageText = ctx.message.text || "[Non-text message]";
 
-    let response = `👤 *User ID:* ${userId}\n💬 *Chat ID:* ${chatId}\n📩 *Message:* ${messageText}`;
+    let response = `👤 *User ID:* ${userId}\n💬 *Chat ID:* ${chatId}\n🆔 *Message ID:* ${messageId}\n📩 *Message:* ${messageText}`;
 
     // If the message is forwarded, get the original sender info
     if (ctx.message.forward_from) {
