@@ -1,26 +1,19 @@
 {
   "name": "id-checker-bot",
   "version": "1.0.0",
-  "description": "Telegram bot for checking IDs of users, chats, and messages",
+  "description": "Telegram bot to check user ID, chat ID and messages",
   "main": "api/webhook.js",
-  "type": "module",
   "scripts": {
     "dev": "vercel dev",
-    "deploy": "vercel deploy --prod"
+    "deploy": "vercel deploy"
   },
-  "keywords": [
-    "telegram",
-    "bot",
-    "vercel",
-    "serverless"
-  ],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "telegraf": "^4.16.3",
-    "dotenv": "^16.3.1"
+    "node-telegram-bot-api": "^0.61.0"
   },
   "devDependencies": {
-    "vercel": "^33.0.1"
+    "vercel": "^32.3.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
   }
 }

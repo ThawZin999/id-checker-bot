@@ -1,97 +1,38 @@
-import { Telegraf } from "telegraf";
+import TelegramBot from "node-telegram-bot-api";
 
-// Initialize bot with environment variable
-const bot = new Telegraf(process.env.BOT_TOKEN);
+const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN);
 
-// Configure webhook settings
-bot.telegram.setWebhook(`${process.env.WEBHOOK_URL}/api/webhook`);
-
-// Helper function to parse and validate updates
-const parseUpdate = (body) => {
-  if (!body || typeof body !== "object") {
-    throw new Error("Invalid update format");
-  }
-  return body;
-};
-
-// Command to get User ID & Chat ID
-bot.start((ctx) => {
-  ctx.reply(`👋 Hello, ${ctx.from.first_name}!
-🔹 Your User ID: ${ctx.from.id}
-🔹 Your Chat ID: ${ctx.chat.id}`);
-});
-
-// Handler for all messages, including those in groups/supergroups
-bot.on("message", async (ctx) => {
-  const message = ctx.message;
-  const chatType = ctx.chat.type;
-
-  const replyText = `
-📩 **Message Info**:
-- 🔹 Chat Type: ${chatType}
-- 🔹 Chat ID: ${ctx.chat.id}
-- 🔹 Message ID: ${message.message_id}
-- 🔹 Forwarded From User ID: ${
-    message.forward_from ? message.forward_from.id : "N/A"
-  }
-- 🔹 Forwarded From Chat ID: ${
-    message.forward_from_chat ? message.forward_from_chat.id : "N/A"
-  }
-- 🔹 Forwarded Message ID: ${message.forward_from_message_id || "N/A"}
-`;
-
+module.exports = async (req, res) => {
   try {
-    await ctx.reply(replyText);
-  } catch (err) {
-    if (err.response?.parameters?.migrate_to_chat_id) {
-      const newChatId = err.response.parameters.migrate_to_chat_id;
-      await ctx.telegram.sendMessage(newChatId, replyText);
-    } else {
-      console.error("Error sending message:", err);
+    if (req.method !== "POST") {
+      res.status(200).json({ message: "OK" });
+      return;
     }
-  }
-});
 
-// Handler for channel posts
-bot.on("channel_post", async (ctx) => {
-  const post = ctx.channelPost;
-  const replyText = `
-📢 **Channel Post Info**:
-- 🔹 Channel ID: ${ctx.chat.id}
-- 🔹 Message ID: ${post.message_id}
-- 🔹 Text: ${post.text ? post.text : "No text (media or other content)"}
-`;
-  try {
-    await ctx.reply(replyText);
-  } catch (err) {
-    console.error("Error sending channel post info:", err);
-  }
-});
+    const { body } = req;
 
-// Webhook handler for Vercel
-export default async function handler(request, response) {
-  try {
-    if (request.method === "POST") {
-      console.log("Received webhook update:", JSON.stringify(request.body));
-      const update = parseUpdate(request.body);
-      console.log("Parsed update:", JSON.stringify(update));
-      await bot.handleUpdate(update);
-      console.log("Update handled successfully");
-      response.status(200).json({ ok: true });
-    } else {
-      console.log(`Received ${request.method} request`);
-      response.status(200).json({ ok: true, message: "Webhook is active" });
+    if (!body || !body.message) {
+      res.status(200).json({ message: "No message data" });
+      return;
     }
+
+    const { message } = body;
+    const chatId = message.chat.id;
+    const userId = message.from.id;
+    const messageText = message.text || "No text content";
+    const messageId = message.message_id;
+
+    const response =
+      `📝 Message Info:\n\n` +
+      `👤 User ID: ${userId}\n` +
+      `💭 Chat ID: ${chatId}\n` +
+      `🔢 Message ID: ${messageId}\n` +
+      `📨 Message: ${messageText}`;
+
+    await bot.sendMessage(chatId, response);
+    res.status(200).json({ message: "Success" });
   } catch (error) {
-    console.error("Webhook handler error:", {
-      message: error.message,
-      stack: error.stack,
-      body: request.body,
-    });
-    response.status(500).json({
-      ok: false,
-      error: error.message,
-      details: "Check server logs for more information",
-    });
+    console.error("Error in webhook handler:", error);
+    res.status(500).json({ error: "Failed to process update" });
   }
-}
+};
