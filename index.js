@@ -7,21 +7,39 @@ dotenv.config();
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const app = express();
 
-app.use(express.json());
-
-app.post(`/${process.env.BOT_TOKEN}`, (req, res) => {
-  bot.handleUpdate(req.body);
-  res.sendStatus(200);
+// Start Command
+bot.start((ctx) => {
+  ctx.reply(
+    "Hello! Send me a message or forward one, and I'll show the details."
+  );
 });
+
+// Handle All Messages
+bot.on("message", (ctx) => {
+  const userId = ctx.from.id;
+  const chatId = ctx.chat.id;
+  const messageText = ctx.message.text || "[Non-text message]";
+
+  let response = `👤 *User ID:* ${userId}\n💬 *Chat ID:* ${chatId}\n📩 *Message:* ${messageText}`;
+
+  // Check if the message is forwarded
+  if (ctx.message.forward_from) {
+    const originalUserId = ctx.message.forward_from.id;
+    const originalUserName = ctx.message.forward_from.username || "No username";
+
+    response += `\n\n🔄 *Forwarded From:*\n👤 *User ID:* ${originalUserId}\n📛 *Username:* @${originalUserName}`;
+  }
+
+  ctx.reply(response, { parse_mode: "Markdown" });
+});
+
+bot.launch();
 
 app.get("/", (req, res) => {
   res.send("Telegram ID Checker Bot is running...");
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, async () => {
-  console.log(`Server running on port ${PORT}`);
-
-  const webhookUrl = `https://id-checker-bot.vercel.app/${process.env.BOT_TOKEN}`;
-  await bot.telegram.setWebhook(webhookUrl);
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
