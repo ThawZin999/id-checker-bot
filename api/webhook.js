@@ -4,9 +4,6 @@ import { Telegraf } from "telegraf";
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
 // Configure webhook settings
-bot.telegram.setWebhook(process.env.WEBHOOK_URL);
-
-// Configure bot settings
 bot.telegram.setWebhook(`${process.env.WEBHOOK_URL}/api/webhook`);
 
 // Helper function to parse and validate updates
@@ -75,14 +72,26 @@ bot.on("channel_post", async (ctx) => {
 export default async function handler(request, response) {
   try {
     if (request.method === "POST") {
+      console.log("Received webhook update:", JSON.stringify(request.body));
       const update = parseUpdate(request.body);
+      console.log("Parsed update:", JSON.stringify(update));
       await bot.handleUpdate(update);
+      console.log("Update handled successfully");
       response.status(200).json({ ok: true });
     } else {
+      console.log(`Received ${request.method} request`);
       response.status(200).json({ ok: true, message: "Webhook is active" });
     }
   } catch (error) {
-    console.error("Webhook handler error:", error);
-    response.status(500).json({ ok: false, error: error.message });
+    console.error("Webhook handler error:", {
+      message: error.message,
+      stack: error.stack,
+      body: request.body,
+    });
+    response.status(500).json({
+      ok: false,
+      error: error.message,
+      details: "Check server logs for more information",
+    });
   }
 }
