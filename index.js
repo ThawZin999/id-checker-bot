@@ -11,6 +11,7 @@ app.use(express.json());
 
 // Webhook endpoint for Telegram updates
 app.post(`/webhook`, (req, res) => {
+  console.log('Received webhook update:', req.body);
   bot.handleUpdate(req.body);
   res.sendStatus(200);
 });
@@ -27,23 +28,32 @@ bot.on("message", (ctx) => {
   try {
     const userId = ctx.from.id;
     const chatId = ctx.chat.id;
-    const messageId = ctx.message.message_id; // Get message ID
+    const messageId = ctx.message.message_id;
     const messageText = ctx.message.text || "[Non-text message]";
+
+    console.log('Received message:', {
+      userId,
+      chatId,
+      messageId,
+      messageText
+    });
 
     let response = `👤 *User ID:* ${userId}\n💬 *Chat ID:* ${chatId}\n🆔 *Message ID:* ${messageId}\n📩 *Message:* ${messageText}`;
 
-    // If the message is forwarded, get the original sender info
     if (ctx.message.forward_from) {
       const originalUserId = ctx.message.forward_from.id;
-      const originalUserName =
-        ctx.message.forward_from.username || "No username";
-
+      const originalUserName = ctx.message.forward_from.username || "No username";
       response += `\n\n🔄 *Forwarded From:*\n👤 *User ID:* ${originalUserId}\n📛 *Username:* @${originalUserName}`;
     }
 
-    ctx.reply(response, { parse_mode: "Markdown" });
+    return ctx.reply(response, { parse_mode: "Markdown" })
+      .catch(error => {
+        console.error('Error sending reply:', error);
+      });
   } catch (error) {
     console.error("Error handling message:", error);
+    return ctx.reply("Sorry, there was an error processing your message.")
+      .catch(console.error);
   }
 });
 
