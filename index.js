@@ -28,20 +28,32 @@ bot.on("message", async (ctx) => {
     const chatId = ctx.chat.id;
     const messageId = ctx.message.message_id;
     const messageText = ctx.message.text || "[Non-text message]";
+    
+    // Get additional user information
+    const firstName = ctx.from.first_name || "Not provided";
+    const lastName = ctx.from.last_name || "Not provided";
+    const username = ctx.from.username ? `@${ctx.from.username}` : "Not provided";
 
-    console.log('Processing message:', {
-      userId,
-      chatId,
-      messageId,
-      messageText
-    });
-
-    let response = `👤 *User ID:* ${userId}\n💬 *Chat ID:* ${chatId}\n🆔 *Message ID:* ${messageId}\n📩 *Message:* ${messageText}`;
+    let response = `👤 *Student Details:*\n`;
+    response += `• ID: \`${userId}\`\n`;
+    response += `• First Name: ${firstName}\n`;
+    response += `• Last Name: ${lastName}\n`;
+    response += `• Username: ${username}\n\n`;
+    response += `💬 *Chat Details:*\n`;
+    response += `• Chat ID: \`${chatId}\`\n`;
+    response += `• Message ID: \`${messageId}\``;
 
     if (ctx.message.forward_from) {
       const originalUserId = ctx.message.forward_from.id;
-      const originalUserName = ctx.message.forward_from.username || "No username";
-      response += `\n\n🔄 *Forwarded From:*\n👤 *User ID:* ${originalUserId}\n📛 *Username:* @${originalUserName}`;
+      const originalFirstName = ctx.message.forward_from.first_name || "Not provided";
+      const originalLastName = ctx.message.forward_from.last_name || "Not provided";
+      const originalUsername = ctx.message.forward_from.username ? `@${ctx.message.forward_from.username}` : "Not provided";
+
+      response += `\n\n🔄 *Forwarded From:*\n`;
+      response += `• User ID: \`${originalUserId}\`\n`;
+      response += `• First Name: ${originalFirstName}\n`;
+      response += `• Last Name: ${originalLastName}\n`;
+      response += `• Username: ${originalUsername}`;
     }
 
     await ctx.reply(response, { parse_mode: "Markdown" });
