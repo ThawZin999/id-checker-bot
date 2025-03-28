@@ -10,28 +10,26 @@ const app = express();
 app.use(express.json());
 
 // Webhook endpoint for Telegram updates
-app.post(`/webhook`, (req, res) => {
+app.post(`/webhook`, async (req, res) => {
   console.log('Received webhook update:', req.body);
-  bot.handleUpdate(req.body);
+  try {
+    await bot.handleUpdate(req.body);
+    console.log('Update processed successfully');
+  } catch (error) {
+    console.error('Error processing update:', error);
+  }
   res.sendStatus(200);
 });
 
-// Start command
-bot.start((ctx) => {
-  ctx.reply(
-    "Hello! Send me a message or forward one, and I'll show the details."
-  );
-});
-
 // Handle messages
-bot.on("message", (ctx) => {
+bot.on("message", async (ctx) => {
   try {
     const userId = ctx.from.id;
     const chatId = ctx.chat.id;
     const messageId = ctx.message.message_id;
     const messageText = ctx.message.text || "[Non-text message]";
 
-    console.log('Received message:', {
+    console.log('Processing message:', {
       userId,
       chatId,
       messageId,
@@ -46,14 +44,15 @@ bot.on("message", (ctx) => {
       response += `\n\n🔄 *Forwarded From:*\n👤 *User ID:* ${originalUserId}\n📛 *Username:* @${originalUserName}`;
     }
 
-    return ctx.reply(response, { parse_mode: "Markdown" })
-      .catch(error => {
-        console.error('Error sending reply:', error);
-      });
+    await ctx.reply(response, { parse_mode: "Markdown" });
+    console.log('Reply sent successfully');
   } catch (error) {
-    console.error("Error handling message:", error);
-    return ctx.reply("Sorry, there was an error processing your message.")
-      .catch(console.error);
+    console.error("Error in message handler:", error);
+    try {
+      await ctx.reply("Sorry, there was an error processing your message.");
+    } catch (replyError) {
+      console.error("Error sending error message:", replyError);
+    }
   }
 });
 
